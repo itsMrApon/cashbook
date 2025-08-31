@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome to CashBook{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Hero Section -->
+        <div class="text-center mb-5">
+            <div class="mb-4">
+                <i class="fas fa-wallet display-1 text-primary"></i>
+            </div>
+            <h1 class="display-4 fw-bold mb-3">Welcome to CashBook</h1>
+            <p class="lead text-muted mb-4">
+                Your comprehensive financial tracking solution. Monitor income, manage expenses, 
+                and generate insightful reports with ease.
+            </p>
+            <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg px-5">
+                <i class="fas fa-sign-in-alt me-2"></i>Get Started
+            </a>
+        </div>
+
+        <!-- Features -->
+        <div class="row g-4 mb-5">
+            <div class="col-md-4 text-center">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <i class="fas fa-chart-line fa-3x text-success"></i>
+                        </div>
+                        <h5 class="card-title">Track Finances</h5>
+                        <p class="card-text text-muted">
+                            Monitor your income and expenses with detailed categorization and tagging.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 text-center">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <i class="fas fa-users fa-3x text-info"></i>
+                        </div>
+                        <h5 class="card-title">Multi-User Support</h5>
+                        <p class="card-text text-muted">
+                            Role-based access control with Admin, Manager, and Viewer permissions.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 text-center">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <i class="fas fa-file-pdf fa-3x text-danger"></i>
+                        </div>
+                        <h5 class="card-title">Generate Reports</h5>
+                        <p class="card-text text-muted">
+                            Create detailed financial reports in PDF and Excel formats.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Features -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <h3 class="card-title text-center mb-4">Key Features</h3>
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Income & Expense Tracking
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Spending Limits & Alerts
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Receipt Attachments
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Advanced Search & Filtering
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Dark Mode Support
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Data Backup & Restore
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Mobile Responsive Design
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Secure Authentication
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

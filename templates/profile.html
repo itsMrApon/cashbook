@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - CashBook{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Profile Information -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-user me-2"></i>Profile Information
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                {% if form %}
+                <form method="POST" novalidate>
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row">
+                        <!-- First Name -->
+                        <div class="col-md-6 mb-3">
+                            {{ form.first_name.label(class="form-label") }}
+                            {{ form.first_name(class="form-control" + (" is-invalid" if form.first_name.errors else "")) }}
+                            {% for error in form.first_name.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Last Name -->
+                        <div class="col-md-6 mb-3">
+                            {{ form.last_name.label(class="form-label") }}
+                            {{ form.last_name(class="form-control" + (" is-invalid" if form.last_name.errors else "")) }}
+                            {% for error in form.last_name.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="mb-3">
+                        {{ form.email.label(class="form-label") }}
+                        {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+                        {% for error in form.email.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Phone -->
+                    <div class="mb-4">
+                        {{ form.phone.label(class="form-label") }}
+                        {{ form.phone(class="form-control" + (" is-invalid" if form.phone.errors else "")) }}
+                        {% for error in form.phone.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                        </a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+                {% endif %}
+
+                {% if password_form %}
+                <!-- Change Password Form -->
+                <hr class="my-4">
+                <h5 class="text-secondary mb-3">
+                    <i class="fas fa-lock me-2"></i>Change Password
+                </h5>
+                
+                <form method="POST" action="{{ url_for('change_password') }}" novalidate>
+                    {{ password_form.hidden_tag() }}
+                    
+                    <!-- Current Password -->
+                    <div class="mb-3">
+                        {{ password_form.current_password.label(class="form-label") }}
+                        {{ password_form.current_password(class="form-control" + (" is-invalid" if password_form.current_password.errors else "")) }}
+                        {% for error in password_form.current_password.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="row">
+                        <!-- New Password -->
+                        <div class="col-md-6 mb-3">
+                            {{ password_form.new_password.label(class="form-label") }}
+                            {{ password_form.new_password(class="form-control" + (" is-invalid" if password_form.new_password.errors else "")) }}
+                            {% for error in password_form.new_password.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Confirm Password -->
+                        <div class="col-md-6 mb-3">
+                            {{ password_form.confirm_password.label(class="form-label") }}
+                            {{ password_form.confirm_password(class="form-control" + (" is-invalid" if password_form.confirm_password.errors else "")) }}
+                            {% for error in password_form.confirm_password.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Change Password Button -->
+                    <div class="d-grid">
+                        {{ password_form.submit(class="btn btn-warning") }}
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Summary & Actions -->
+    <div class="col-lg-4">
+        <!-- Profile Summary -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="fas fa-id-card me-2"></i>Profile Summary
+                </h5>
+            </div>
+            <div class="card-body text-center">
+                <!-- Avatar -->
+                <div class="bg-primary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" 
+                     style="width: 80px; height: 80px;">
+                    <span class="text-white h2 mb-0">
+                        {{ current_user.get_full_name()[:1].upper() }}
+                    </span>
+                </div>
+                
+                <!-- User Info -->
+                <h5 class="mb-1">{{ current_user.get_full_name() }}</h5>
+                <p class="text-muted mb-2">@{{ current_user.username }}</p>
+                
+                <!-- Role Badge -->
+                <span class="badge bg-{{ 'danger' if current_user.role.name == 'Admin' else 'primary' if current_user.role.name == 'Manager' else 'secondary' }} mb-3">
+                    <i class="fas fa-{{ 'crown' if current_user.role.name == 'Admin' else 'user-tie' if current_user.role.name == 'Manager' else 'eye' }} me-1"></i>
+                    {{ current_user.role.name }}
+                </span>
+                
+                <!-- Member Since -->
+                <div class="text-muted small">
+                    <i class="fas fa-calendar-alt me-1"></i>
+                    Member since {{ current_user.created_at.strftime('%B %Y') }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Account Information -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Account Details
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Username:</span>
+                    <span class="fw-bold">{{ current_user.username }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Email:</span>
+                    <span class="fw-bold">{{ current_user.email }}</span>
+                </div>
+                {% if current_user.phone %}
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Phone:</span>
+                    <span class="fw-bold">{{ current_user.phone }}</span>
+                </div>
+                {% endif %}
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Role:</span>
+                    <span class="fw-bold">{{ current_user.role.name }}</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-muted">Status:</span>
+                    <span class="badge bg-success">Active</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if current_user.has_permission('create') %}
+                    <a href="{{ url_for('add_transaction') }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-plus me-2"></i>Add Transaction
+                    </a>
+                    {% endif %}
+                    
+                    {% if current_user.has_permission('read') %}
+                    <a href="{{ url_for('transactions') }}" class="btn btn-outline-info btn-sm">
+                        <i class="fas fa-list me-2"></i>View Transactions
+                    </a>
+                    {% endif %}
+                    
+                    {% if current_user.has_permission('reports') %}
+                    <a href="{{ url_for('reports') }}" class="btn btn-outline-success btn-sm">
+                        <i class="fas fa-chart-line me-2"></i>Generate Report
+                    </a>
+                    {% endif %}
+                    
+                    <a href="{{ url_for('settings') }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-cog me-2"></i>Settings
+                    </a>
+                    
+                    {% if current_user.has_permission('backup') %}
+                    <a href="{{ url_for('backup') }}" class="btn btn-outline-warning btn-sm">
+                        <i class="fas fa-download me-2"></i>Backup Data
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Show change password form if there are password form errors
+document.addEventListener('DOMContentLoaded', function() {
+    {% if password_form and password_form.errors %}
+    // Scroll to password form if there are errors
+    document.querySelector('hr').scrollIntoView({ behavior: 'smooth' });
+    {% endif %}
+});
+
+// Password strength indicator (optional enhancement)
+document.addEventListener('DOMContentLoaded', function() {
+    const newPasswordField = document.getElementById('new_password');
+    if (newPasswordField) {
+        newPasswordField.addEventListener('input', function() {
+            const password = this.value;
+            let strength = 0;
+            
+            if (password.length >= 8) strength++;
+            if (/[a-z]/.test(password)) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
+            
+            // You could add a visual strength indicator here
+        });
+    }
+});
+</script>
+{% endblock %}

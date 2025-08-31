@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}Users - CashBook{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">User Management</h1>
+        <p class="text-muted mb-0">Manage system users and their permissions</p>
+    </div>
+    <a href="{{ url_for('register') }}" class="btn btn-primary">
+        <i class="fas fa-user-plus me-1"></i>Add New User
+    </a>
+</div>
+
+<!-- Users Table -->
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        {% if users %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>User</th>
+                        <th>Contact</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Member Since</th>
+                        <th>Last Activity</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr class="{{ 'table-secondary' if not user.is_active else '' }}">
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                     style="width: 40px; height: 40px;">
+                                    <span class="text-white fw-bold">
+                                        {{ user.get_full_name()[:1].upper() }}
+                                    </span>
+                                </div>
+                                <div>
+                                    <div class="fw-bold">{{ user.get_full_name() }}</div>
+                                    <small class="text-muted">@{{ user.username }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div>{{ user.email }}</div>
+                            {% if user.phone %}
+                            <small class="text-muted">{{ user.phone }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 'danger' if user.role.name == 'Admin' else 'primary' if user.role.name == 'Manager' else 'secondary' }}">
+                                <i class="fas fa-{{ 'crown' if user.role.name == 'Admin' else 'user-tie' if user.role.name == 'Manager' else 'eye' }} me-1"></i>
+                                {{ user.role.name }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if user.is_active %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check-circle me-1"></i>Active
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">
+                                    <i class="fas fa-ban me-1"></i>Inactive
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div>{{ user.created_at.strftime('%m/%d/%Y') }}</div>
+                            <small class="text-muted">{{ user.created_at.strftime('%H:%M') }}</small>
+                        </td>
+                        <td>
+                            <div>{{ user.updated_at.strftime('%m/%d/%Y') }}</div>
+                            <small class="text-muted">{{ user.updated_at.strftime('%H:%M') }}</small>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('edit_user', id=user.id) }}" 
+                                   class="btn btn-outline-primary" title="Edit User">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% if user.id != current_user.id %}
+                                <button type="button" class="btn btn-outline-danger" 
+                                        onclick="confirmDeactivate({{ user.id }}, '{{ user.username }}')" 
+                                        title="{{ 'Reactivate' if not user.is_active else 'Deactivate' }} User">
+                                    <i class="fas fa-{{ 'check' if not user.is_active else 'ban' }}"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-5">
+            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No users found</h5>
+            <p class="text-muted">Start by adding your first user to the system</p>
+            <a href="{{ url_for('register') }}" class="btn btn-primary">
+                <i class="fas fa-user-plus me-1"></i>Add First User
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- User Statistics -->
+{% if users %}
+<div class="row g-4 mt-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body">
+                <div class="text-primary mb-2">
+                    <i class="fas fa-users fa-2x"></i>
+                </div>
+                <h4 class="mb-1">{{ users|length }}</h4>
+                <small class="text-muted">Total Users</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body">
+                <div class="text-success mb-2">
+                    <i class="fas fa-user-check fa-2x"></i>
+                </div>
+                <h4 class="mb-1">{{ users|selectattr('is_active')|list|length }}</h4>
+                <small class="text-muted">Active Users</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body">
+                <div class="text-danger mb-2">
+                    <i class="fas fa-crown fa-2x"></i>
+                </div>
+                <h4 class="mb-1">{{ users|selectattr('role.name', 'equalto', 'Admin')|list|length }}</h4>
+                <small class="text-muted">Administrators</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body">
+                <div class="text-info mb-2">
+                    <i class="fas fa-user-tie fa-2x"></i>
+                </div>
+                <h4 class="mb-1">{{ users|selectattr('role.name', 'equalto', 'Manager')|list|length }}</h4>
+                <small class="text-muted">Managers</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Role Information -->
+<div class="card border-0 shadow-sm mt-4">
+    <div class="card-header bg-white border-bottom">
+        <h5 class="mb-0">
+            <i class="fas fa-info-circle me-2"></i>Role Permissions
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <h6 class="text-danger">
+                    <i class="fas fa-crown me-2"></i>Administrator
+                </h6>
+                <ul class="list-unstyled text-muted small">
+                    <li><i class="fas fa-check text-success me-1"></i> Full system access</li>
+                    <li><i class="fas fa-check text-success me-1"></i> User management</li>
+                    <li><i class="fas fa-check text-success me-1"></i> All transactions</li>
+                    <li><i class="fas fa-check text-success me-1"></i> Generate reports</li>
+                    <li><i class="fas fa-check text-success me-1"></i> Data backup</li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-primary">
+                    <i class="fas fa-user-tie me-2"></i>Manager
+                </h6>
+                <ul class="list-unstyled text-muted small">
+                    <li><i class="fas fa-check text-success me-1"></i> Add/view transactions</li>
+                    <li><i class="fas fa-check text-success me-1"></i> Manage expenses</li>
+                    <li><i class="fas fa-check text-success me-1"></i> Generate reports</li>
+                    <li><i class="fas fa-times text-danger me-1"></i> User management</li>
+                    <li><i class="fas fa-times text-danger me-1"></i> System backup</li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-secondary">
+                    <i class="fas fa-eye me-2"></i>Viewer
+                </h6>
+                <ul class="list-unstyled text-muted small">
+                    <li><i class="fas fa-check text-success me-1"></i> Read-only access</li>
+                    <li><i class="fas fa-check text-success me-1"></i> View reports</li>
+                    <li><i class="fas fa-times text-danger me-1"></i> Add/edit transactions</li>
+                    <li><i class="fas fa-times text-danger me-1"></i> User management</li>
+                    <li><i class="fas fa-times text-danger me-1"></i> System backup</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Deactivate User Modal -->
+<div class="modal fade" id="deactivateModal" tabindex="-1" aria-labelledby="deactivateModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deactivateModalLabel">
+                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                    Confirm User Deactivation
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to <span id="action-text">deactivate</span> the user <strong id="username-text"></strong>?</p>
+                <p class="text-muted small">
+                    <span id="deactivate-warning">This will prevent the user from logging in and accessing the system. The user's data will remain intact.</span>
+                    <span id="activate-warning" class="d-none">This will allow the user to log in and access the system again.</span>
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deactivateForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger" id="confirm-btn">
+                        <i class="fas fa-ban me-1"></i><span id="btn-text">Deactivate</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmDeactivate(userId, username) {
+    const deactivateForm = document.getElementById('deactivateForm');
+    const usernameText = document.getElementById('username-text');
+    const actionText = document.getElementById('action-text');
+    const btnText = document.getElementById('btn-text');
+    const confirmBtn = document.getElementById('confirm-btn');
+    const deactivateWarning = document.getElementById('deactivate-warning');
+    const activateWarning = document.getElementById('activate-warning');
+    
+    // Check if user is already inactive (this would be passed from template in real implementation)
+    const isActive = true; // This should be determined from the actual user data
+    
+    deactivateForm.action = `/users/${userId}/delete`;
+    usernameText.textContent = username;
+    
+    if (isActive) {
+        actionText.textContent = 'deactivate';
+        btnText.textContent = 'Deactivate';
+        confirmBtn.className = 'btn btn-danger';
+        confirmBtn.innerHTML = '<i class="fas fa-ban me-1"></i>Deactivate';
+        deactivateWarning.classList.remove('d-none');
+        activateWarning.classList.add('d-none');
+    } else {
+        actionText.textContent = 'reactivate';
+        btnText.textContent = 'Reactivate';
+        confirmBtn.className = 'btn btn-success';
+        confirmBtn.innerHTML = '<i class="fas fa-check me-1"></i>Reactivate';
+        deactivateWarning.classList.add('d-none');
+        activateWarning.classList.remove('d-none');
+    }
+    
+    const deactivateModal = new bootstrap.Modal(document.getElementById('deactivateModal'));
+    deactivateModal.show();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}Add Transaction - CashBook{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+        <div class="card border-0 shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-plus-circle me-2"></i>
+                    Add New Transaction
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" enctype="multipart/form-data" novalidate>
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row">
+                        <!-- Type -->
+                        <div class="col-md-6 mb-3">
+                            {{ form.type.label(class="form-label") }}
+                            {{ form.type(class="form-select" + (" is-invalid" if form.type.errors else ""), id="transaction-type") }}
+                            {% for error in form.type.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Amount -->
+                        <div class="col-md-6 mb-3">
+                            {{ form.amount.label(class="form-label") }}
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                {{ form.amount(class="form-control" + (" is-invalid" if form.amount.errors else ""), placeholder="0.00") }}
+                            </div>
+                            {% for error in form.amount.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Category -->
+                        <div class="col-md-6 mb-3">
+                            {{ form.category_id.label(class="form-label") }}
+                            {{ form.category_id(class="form-select" + (" is-invalid" if form.category_id.errors else ""), id="category-select") }}
+                            {% for error in form.category_id.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Date -->
+                        <div class="col-md-6 mb-3">
+                            {{ form.transaction_date.label(class="form-label") }}
+                            {{ form.transaction_date(class="form-control" + (" is-invalid" if form.transaction_date.errors else "")) }}
+                            {% for error in form.transaction_date.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-3">
+                        {{ form.description.label(class="form-label") }}
+                        {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows="3", placeholder="Enter transaction description...") }}
+                        {% for error in form.description.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="row">
+                        <!-- Party -->
+                        <div class="col-md-6 mb-3">
+                            {{ form.party.label(class="form-label") }}
+                            {{ form.party(class="form-control" + (" is-invalid" if form.party.errors else ""), placeholder="Person or organization (optional)") }}
+                            {% for error in form.party.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Tags -->
+                        <div class="col-md-6 mb-3">
+                            {{ form.tags.label(class="form-label") }}
+                            {{ form.tags(class="form-control" + (" is-invalid" if form.tags.errors else ""), placeholder="Enter tags separated by commas") }}
+                            {% for error in form.tags.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                            <div class="form-text">Separate multiple tags with commas (e.g., groceries, weekly shopping)</div>
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="mb-3">
+                        {{ form.notes.label(class="form-label") }}
+                        {{ form.notes(class="form-control" + (" is-invalid" if form.notes.errors else ""), rows="2", placeholder="Additional notes (optional)") }}
+                        {% for error in form.notes.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Receipt Upload -->
+                    <div class="mb-4">
+                        {{ form.receipts.label(class="form-label") }}
+                        {{ form.receipts(class="form-control" + (" is-invalid" if form.receipts.errors else ""), accept=".pdf,.png,.jpg,.jpeg") }}
+                        {% for error in form.receipts.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                        <div class="form-text">Upload receipt (PDF, PNG, JPG files only, max 16MB)</div>
+                    </div>
+
+                    <!-- Spending Limit Check -->
+                    <div id="spending-alert" class="alert alert-warning d-none" role="alert">
+                        <h6 class="alert-heading"><i class="fas fa-exclamation-triangle me-1"></i>Spending Alert</h6>
+                        <div id="spending-message"></div>
+                    </div>
+
+                    <!-- Submit Buttons -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('transactions') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Transactions
+                        </a>
+                        <div>
+                            <button type="button" class="btn btn-outline-primary me-2" onclick="clearForm()">
+                                <i class="fas fa-undo me-1"></i>Clear
+                            </button>
+                            {{ form.submit(class="btn btn-primary", id="submit-btn") }}
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const typeSelect = document.getElementById('transaction-type');
+    const categorySelect = document.getElementById('category-select');
+    const amountInput = document.getElementById('amount');
+    const submitBtn = document.getElementById('submit-btn');
+    const spendingAlert = document.getElementById('spending-alert');
+    const spendingMessage = document.getElementById('spending-message');
+
+    // Set initial type from URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const typeParam = urlParams.get('type');
+    if (typeParam && (typeParam === 'income' || typeParam === 'expense')) {
+        typeSelect.value = typeParam;
+        updateSubmitButton();
+    }
+
+    // Update submit button text based on type
+    function updateSubmitButton() {
+        const type = typeSelect.value;
+        const icon = type === 'income' ? 'fas fa-plus-circle' : 'fas fa-minus-circle';
+        const text = type === 'income' ? 'Add Income' : 'Add Expense';
+        submitBtn.innerHTML = `<i class="${icon} me-1"></i>${text}`;
+        submitBtn.className = `btn ${type === 'income' ? 'btn-success' : 'btn-danger'}`;
+    }
+
+    // Check spending limits when amount or category changes
+    function checkSpendingLimits() {
+        if (typeSelect.value === 'expense' && categorySelect.value && amountInput.value) {
+            fetch(`/api/spending-check/${categorySelect.value}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        let messages = [];
+                        data.forEach(alert => {
+                            const newTotal = alert.spent + parseFloat(amountInput.value);
+                            const newPercentage = (newTotal / alert.limit) * 100;
+                            
+                            if (newPercentage > 100) {
+                                messages.push(`This transaction will exceed your ${alert.type} spending limit by $${(newTotal - alert.limit).toFixed(2)}`);
+                            } else if (newPercentage > 80) {
+                                messages.push(`This transaction will bring you to ${newPercentage.toFixed(1)}% of your ${alert.type} spending limit`);
+                            }
+                        });
+                        
+                        if (messages.length > 0) {
+                            spendingMessage.innerHTML = messages.join('<br>');
+                            spendingAlert.classList.remove('d-none');
+                        } else {
+                            spendingAlert.classList.add('d-none');
+                        }
+                    } else {
+                        spendingAlert.classList.add('d-none');
+                    }
+                })
+                .catch(error => console.error('Error checking spending limits:', error));
+        } else {
+            spendingAlert.classList.add('d-none');
+        }
+    }
+
+    // Event listeners
+    typeSelect.addEventListener('change', updateSubmitButton);
+    categorySelect.addEventListener('change', checkSpendingLimits);
+    amountInput.addEventListener('input', checkSpendingLimits);
+
+    // Initial call
+    updateSubmitButton();
+});
+
+function clearForm() {
+    if (confirm('Are you sure you want to clear all form data?')) {
+        document.querySelector('form').reset();
+        document.getElementById('spending-alert').classList.add('d-none');
+    }
+}
+
+// Auto-resize textareas
+document.addEventListener('DOMContentLoaded', function() {
+    const textareas = document.querySelectorAll('textarea');
+    textareas.forEach(textarea => {
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+    });
+});
+</script>
+{% endblock %}

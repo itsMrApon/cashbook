@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}Transactions - CashBook{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">Transactions</h1>
+        <p class="text-muted mb-0">Manage your income and expense records</p>
+    </div>
+    {% if current_user.has_permission('create') %}
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('add_transaction') }}?type=income" class="btn btn-success">
+            <i class="fas fa-plus-circle me-1"></i>Add Income
+        </a>
+        <a href="{{ url_for('add_transaction') }}?type=expense" class="btn btn-danger">
+            <i class="fas fa-minus-circle me-1"></i>Add Expense
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Search and Filter -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-3">
+                {{ search_form.search_term(class="form-control", placeholder="Search transactions...") }}
+            </div>
+            <div class="col-md-2">
+                {{ search_form.category_id(class="form-select") }}
+            </div>
+            <div class="col-md-2">
+                {{ search_form.type(class="form-select") }}
+            </div>
+            <div class="col-md-2">
+                {{ search_form.start_date(class="form-control", placeholder="From Date") }}
+            </div>
+            <div class="col-md-2">
+                {{ search_form.end_date(class="form-control", placeholder="To Date") }}
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Transactions Table -->
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        {% if transactions %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                        <th>Category</th>
+                        <th>Party</th>
+                        <th class="text-end">Amount</th>
+                        {% if current_user.has_permission('manage_users') %}
+                        <th>User</th>
+                        {% endif %}
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transaction in transactions %}
+                    <tr>
+                        <td>
+                            <div class="fw-bold">{{ transaction.transaction_date.strftime('%m/%d/%Y') }}</div>
+                            <small class="text-muted">{{ transaction.created_at.strftime('%H:%M') }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if transaction.type == 'income' else 'danger' }}">
+                                <i class="fas fa-{{ 'plus' if transaction.type == 'income' else 'minus' }} me-1"></i>
+                                {{ transaction.type.title() }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="fw-bold">{{ transaction.description[:40] }}{% if transaction.description|length > 40 %}...{% endif %}</div>
+                            {% if transaction.notes %}
+                            <small class="text-muted">{{ transaction.notes[:30] }}{% if transaction.notes|length > 30 %}...{% endif %}</small>
+                            {% endif %}
+                            {% if transaction.tags %}
+                            <div class="mt-1">
+                                {% for tag in transaction.tags %}
+                                <span class="badge bg-secondary me-1">{{ tag.name }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge" style="background-color: {{ transaction.category.color }};">
+                                {{ transaction.category.name }}
+                            </span>
+                        </td>
+                        <td>{{ transaction.party or '-' }}</td>
+                        <td class="text-end">
+                            <span class="fw-bold text-{{ 'success' if transaction.type == 'income' else 'danger' }}">
+                                {{ format_currency(transaction.amount) }}
+                            </span>
+                            {% if transaction.receipts %}
+                            <div class="mt-1">
+                                <i class="fas fa-paperclip text-muted" title="Has receipts"></i>
+                            </div>
+                            {% endif %}
+                        </td>
+                        {% if current_user.has_permission('manage_users') %}
+                        <td>
+                            <small class="text-muted">{{ transaction.user.get_full_name() }}</small>
+                        </td>
+                        {% endif %}
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                {% if current_user.has_permission('update') and (current_user.has_permission('manage_users') or transaction.user_id == current_user.id) %}
+                                <a href="{{ url_for('edit_transaction', id=transaction.id) }}" 
+                                   class="btn btn-outline-primary" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% endif %}
+                                {% if current_user.has_permission('delete') and (current_user.has_permission('manage_users') or transaction.user_id == current_user.id) %}
+                                <button type="button" class="btn btn-outline-danger" 
+                                        onclick="confirmDelete({{ transaction.id }})" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if pagination.pages > 1 %}
+        <nav aria-label="Transaction pagination" class="p-3">
+            <ul class="pagination justify-content-center mb-0">
+                {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('transactions', page=pagination.prev_num, **request.args) }}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for page_num in pagination.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != pagination.page %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('transactions', page=page_num, **request.args) }}">
+                                {{ page_num }}
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('transactions', page=pagination.next_num, **request.args) }}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-5">
+            <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No transactions found</h5>
+            <p class="text-muted">{% if request.args %}Try adjusting your search criteria{% else %}Start by adding your first transaction{% endif %}</p>
+            {% if current_user.has_permission('create') %}
+            <a href="{{ url_for('add_transaction') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>Add Transaction
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                    Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this transaction? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i>Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmDelete(transactionId) {
+    const deleteForm = document.getElementById('deleteForm');
+    deleteForm.action = `/transactions/${transactionId}/delete`;
+    
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+
+// Auto-submit search form on date changes
+document.addEventListener('DOMContentLoaded', function() {
+    const startDate = document.getElementById('start_date');
+    const endDate = document.getElementById('end_date');
+    
+    if (startDate && endDate) {
+        startDate.addEventListener('change', function() {
+            if (this.value && endDate.value) {
+                this.form.submit();
+            }
+        });
+        
+        endDate.addEventListener('change', function() {
+            if (this.value && startDate.value) {
+                this.form.submit();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

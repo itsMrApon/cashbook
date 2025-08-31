@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - CashBook{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">Financial Reports</h1>
+        <p class="text-muted mb-0">Generate detailed financial reports in PDF or Excel format</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Report Form -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-filter me-2"></i>Report Filters
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" novalidate>
+                    {{ form.hidden_tag() }}
+                    
+                    <!-- Date Range -->
+                    <div class="mb-3">
+                        {{ form.start_date.label(class="form-label") }}
+                        {{ form.start_date(class="form-control" + (" is-invalid" if form.start_date.errors else "")) }}
+                        {% for error in form.start_date.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.end_date.label(class="form-label") }}
+                        {{ form.end_date(class="form-control" + (" is-invalid" if form.end_date.errors else "")) }}
+                        {% for error in form.end_date.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Quick Date Ranges -->
+                    <div class="mb-3">
+                        <label class="form-label">Quick Select</label>
+                        <div class="btn-group-vertical w-100" role="group">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setDateRange('today')">Today</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setDateRange('week')">This Week</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setDateRange('month')">This Month</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setDateRange('quarter')">This Quarter</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setDateRange('year')">This Year</button>
+                        </div>
+                    </div>
+
+                    <!-- Filters -->
+                    {% if current_user.has_permission('manage_users') %}
+                    <div class="mb-3">
+                        {{ form.user_id.label(class="form-label") }}
+                        {{ form.user_id(class="form-select" + (" is-invalid" if form.user_id.errors else "")) }}
+                        {% for error in form.user_id.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        {{ form.category_id.label(class="form-label") }}
+                        {{ form.category_id(class="form-select" + (" is-invalid" if form.category_id.errors else "")) }}
+                        {% for error in form.category_id.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.type.label(class="form-label") }}
+                        {{ form.type(class="form-select" + (" is-invalid" if form.type.errors else "")) }}
+                        {% for error in form.type.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Format -->
+                    <div class="mb-4">
+                        {{ form.format.label(class="form-label") }}
+                        {{ form.format(class="form-select" + (" is-invalid" if form.format.errors else "")) }}
+                        {% for error in form.format.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Generate Button -->
+                    <div class="d-grid">
+                        {{ form.submit(class="btn btn-success btn-lg") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Preview/Info -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Report Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <h6 class="text-primary">
+                            <i class="fas fa-file-pdf me-2"></i>PDF Reports
+                        </h6>
+                        <ul class="list-unstyled text-muted">
+                            <li><i class="fas fa-check text-success me-2"></i>Summary statistics</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Detailed transaction list</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Professional formatting</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Ready for printing</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6 class="text-success">
+                            <i class="fas fa-file-excel me-2"></i>Excel Reports
+                        </h6>
+                        <ul class="list-unstyled text-muted">
+                            <li><i class="fas fa-check text-success me-2"></i>Raw transaction data</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Summary sheet included</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Easy data manipulation</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Compatible with Excel/Calc</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="alert alert-info" role="alert">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-lightbulb me-2"></i>Report Tips
+                    </h6>
+                    <ul class="mb-0">
+                        <li>Use date ranges to focus on specific periods</li>
+                        <li>Filter by category to analyze spending patterns</li>
+                        <li>PDF format is best for sharing and archiving</li>
+                        <li>Excel format allows for further analysis and calculations</li>
+                        {% if current_user.has_permission('manage_users') %}
+                        <li>Admin users can generate reports for specific users or all users</li>
+                        {% endif %}
+                    </ul>
+                </div>
+
+                <!-- Recent Reports -->
+                <div class="mt-4">
+                    <h6 class="text-muted mb-3">
+                        <i class="fas fa-history me-2"></i>Recent Report Activity
+                    </h6>
+                    <div class="text-center py-3">
+                        <i class="fas fa-clock fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">Report history will appear here</p>
+                        <small class="text-muted">Generate your first report to see activity</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Statistics -->
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>Quick Statistics
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-3">
+                        <div class="border-end">
+                            <h4 class="text-primary mb-1" id="total-transactions">-</h4>
+                            <small class="text-muted">Total Transactions</small>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="border-end">
+                            <h4 class="text-success mb-1" id="total-income">-</h4>
+                            <small class="text-muted">Total Income</small>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="border-end">
+                            <h4 class="text-danger mb-1" id="total-expenses">-</h4>
+                            <small class="text-muted">Total Expenses</small>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <h4 class="text-info mb-1" id="net-amount">-</h4>
+                        <small class="text-muted">Net Amount</small>
+                    </div>
+                </div>
+                
+                <div class="mt-3 text-center">
+                    <small class="text-muted">Select date range to see statistics</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function setDateRange(period) {
+    const startDate = document.getElementById('start_date');
+    const endDate = document.getElementById('end_date');
+    const today = new Date();
+    
+    switch(period) {
+        case 'today':
+            startDate.value = today.toISOString().split('T')[0];
+            endDate.value = today.toISOString().split('T')[0];
+            break;
+            
+        case 'week':
+            const weekStart = new Date(today);
+            weekStart.setDate(today.getDate() - today.getDay());
+            startDate.value = weekStart.toISOString().split('T')[0];
+            endDate.value = today.toISOString().split('T')[0];
+            break;
+            
+        case 'month':
+            const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+            startDate.value = monthStart.toISOString().split('T')[0];
+            endDate.value = today.toISOString().split('T')[0];
+            break;
+            
+        case 'quarter':
+            const quarter = Math.floor(today.getMonth() / 3);
+            const quarterStart = new Date(today.getFullYear(), quarter * 3, 1);
+            startDate.value = quarterStart.toISOString().split('T')[0];
+            endDate.value = today.toISOString().split('T')[0];
+            break;
+            
+        case 'year':
+            const yearStart = new Date(today.getFullYear(), 0, 1);
+            startDate.value = yearStart.toISOString().split('T')[0];
+            endDate.value = today.toISOString().split('T')[0];
+            break;
+    }
+    
+    updateStatistics();
+}
+
+function updateStatistics() {
+    const startDate = document.getElementById('start_date').value;
+    const endDate = document.getElementById('end_date').value;
+    
+    if (startDate && endDate) {
+        // This would make an API call to get statistics for the date range
+        // For now, we'll just show placeholder text
+        document.getElementById('total-transactions').textContent = '...';
+        document.getElementById('total-income').textContent = '...';
+        document.getElementById('total-expenses').textContent = '...';
+        document.getElementById('net-amount').textContent = '...';
+    }
+}
+
+// Update statistics when date range changes
+document.addEventListener('DOMContentLoaded', function() {
+    const startDate = document.getElementById('start_date');
+    const endDate = document.getElementById('end_date');
+    
+    startDate.addEventListener('change', updateStatistics);
+    endDate.addEventListener('change', updateStatistics);
+    
+    // Set default to current month
+    setDateRange('month');
+});
+</script>
+{% endblock %}

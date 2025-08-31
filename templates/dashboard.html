@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - CashBook{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">Dashboard</h1>
+        <p class="text-muted mb-0">Welcome back, {{ current_user.get_full_name() }}!</p>
+    </div>
+    {% if current_user.has_permission('create') %}
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('add_transaction') }}?type=income" class="btn btn-success">
+            <i class="fas fa-plus-circle me-1"></i>Add Income
+        </a>
+        <a href="{{ url_for('add_transaction') }}?type=expense" class="btn btn-danger">
+            <i class="fas fa-minus-circle me-1"></i>Add Expense
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Spending Alerts -->
+{% if spending_alerts %}
+<div class="alert alert-warning" role="alert">
+    <h6 class="alert-heading"><i class="fas fa-exclamation-triangle me-1"></i>Spending Alerts</h6>
+    <ul class="mb-0">
+        {% for alert in spending_alerts %}
+        <li>
+            {{ alert.limit.type.title() }} spending limit 
+            {% if alert.limit.category %}for {{ alert.limit.category.name }}{% endif %}
+            is {{ "exceeded" if alert.percentage > 100 else "approaching" }} 
+            ({{ "%.1f"|format(alert.percentage) }}% - {{ format_currency(alert.spent) }} of {{ format_currency(alert.limit.amount) }})
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<!-- Statistics Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                            <i class="fas fa-arrow-up fa-lg text-success"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <div class="fw-bold h5 mb-0">{{ format_currency(stats.this_month_income) }}</div>
+                        <div class="text-muted small">This Month Income</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-danger bg-opacity-10 rounded-circle p-3">
+                            <i class="fas fa-arrow-down fa-lg text-danger"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <div class="fw-bold h5 mb-0">{{ format_currency(stats.this_month_expenses) }}</div>
+                        <div class="text-muted small">This Month Expenses</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-{{ 'success' if stats.this_month_net >= 0 else 'warning' }} bg-opacity-10 rounded-circle p-3">
+                            <i class="fas fa-balance-scale fa-lg text-{{ 'success' if stats.this_month_net >= 0 else 'warning' }}"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <div class="fw-bold h5 mb-0">{{ format_currency(stats.this_month_net) }}</div>
+                        <div class="text-muted small">Net Amount</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-info bg-opacity-10 rounded-circle p-3">
+                            <i class="fas fa-exchange-alt fa-lg text-info"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <div class="fw-bold h5 mb-0">{{ stats.total_transactions }}</div>
+                        <div class="text-muted small">Total Transactions</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Recent Transactions -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Transactions</h5>
+                    {% if current_user.has_permission('read') %}
+                    <a href="{{ url_for('transactions') }}" class="btn btn-outline-primary btn-sm">
+                        View All <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% if stats.recent_transactions %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Category</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transaction in stats.recent_transactions %}
+                            <tr>
+                                <td>
+                                    <small class="text-muted">{{ transaction.transaction_date.strftime('%m/%d') }}</small>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge bg-{{ 'success' if transaction.type == 'income' else 'danger' }} me-2">
+                                            <i class="fas fa-{{ 'plus' if transaction.type == 'income' else 'minus' }}"></i>
+                                        </span>
+                                        {{ transaction.description[:30] }}{% if transaction.description|length > 30 %}...{% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge" style="background-color: {{ transaction.category.color }};">
+                                        {{ transaction.category.name }}
+                                    </span>
+                                </td>
+                                <td class="text-end fw-bold text-{{ 'success' if transaction.type == 'income' else 'danger' }}">
+                                    {{ format_currency(transaction.amount) }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+                    <h6 class="text-muted">No transactions yet</h6>
+                    {% if current_user.has_permission('create') %}
+                    <a href="{{ url_for('add_transaction') }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-1"></i>Add Your First Transaction
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions & Info -->
+    <div class="col-lg-4">
+        <!-- Quick Actions -->
+        {% if current_user.has_permission('create') %}
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('add_transaction') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-plus me-2"></i>Add Transaction
+                    </a>
+                    {% if current_user.has_permission('reports') %}
+                    <a href="{{ url_for('reports') }}" class="btn btn-outline-success">
+                        <i class="fas fa-download me-2"></i>Generate Report
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('settings') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-cog me-2"></i>Settings
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- System Info -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">System Info</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Your Role:</span>
+                    <span class="badge bg-primary">{{ current_user.role.name }}</span>
+                </div>
+                {% if current_user.has_permission('manage_users') %}
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Total Users:</span>
+                    <span class="fw-bold">{{ stats.total_users }}</span>
+                </div>
+                {% endif %}
+                <div class="d-flex justify-content-between">
+                    <span class="text-muted">Member Since:</span>
+                    <span class="fw-bold">{{ current_user.created_at.strftime('%b %Y') }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Auto-refresh dashboard stats every 5 minutes
+setInterval(function() {
+    fetch('/api/dashboard-stats')
+        .then(response => response.json())
+        .then(data => {
+            // Update the stats in real-time if needed
+            console.log('Dashboard stats updated');
+        })
+        .catch(error => console.error('Error updating dashboard stats:', error));
+}, 300000); // 5 minutes
+</script>
+{% endblock %}
