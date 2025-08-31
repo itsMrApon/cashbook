@@ -1,0 +1,248 @@
+Software Requirement Specification (SRS)
+Project Title: Responsive & Multi-Functional CashBook-like Web Application
+Prepared For: [Client Name]
+Prepared By: [Your Name / Team Name]
+Date: August 31, 2025
+
+1. Introduction
+1.1 Purpose
+The purpose of this project is to develop a responsive, multi-user, financial tracking Progressive Web Application (PWA) that allows individuals and organizations to track income and expenses, set spending limits, generate reports, and work seamlessly across devices with offline capabilities.
+1.2 Scope
+The system will provide:
+Income and expense tracking with categorization and tagging.
+Multi-user support with role-based access (Admin, Manager, Viewer).
+Reporting in PDF and Excel formats.
+Secure authentication (OTP/Password).
+Data backup, restore, and offline functionality with synchronization.
+Cross-platform responsive design (desktop, tablet, mobile).
+Optional features such as smart reminders, multiple ledgers, and custom dashboards will be considered in later phases.
+
+
+
+
+2. Overall Description
+2.1 Product Perspective
+The system will be a standalone web application with PWA features. It will store user and transaction data in a secure database and allow offline-first operation with synchronization once internet connectivity is restored.
+2.2 Product Functions
+Log income/expenses with categories, tags, and notes.
+Upload and attach receipts for verification.
+Generate downloadable/exportable reports (PDF, Excel).
+Apply role-based restrictions on features.
+Provide quick search and filters for data retrieval.
+Work offline with background synchronization.
+Support data backup and restore.
+2.3 User Classes and Characteristics
+Admin: Full system access, user management, reports.
+Manager: Add/view transactions, manage expenses, generate reports.
+Viewer: Read-only access to data and reports.
+2.4 Operating Environment
+Web browsers (Chrome, Firefox, Safari, Edge).
+Backend: Laravel / Node.js with MySQL/PostgreSQL.
+Desktop Operating Systems via PWA install
+Mobile devices by the web app
+N.B: There are restrictions on MacOS as it has newly started supporting PWA installs and therefore some features may be limited because of OS limitations.
+
+
+
+
+3. Functional Requirements
+Authentication & Authorization
+Login via password or OTP.
+Role-based access control (Admin, Manager, Viewer).
+
+
+Transaction Management
+Add income/expense with category, tags, and notes.
+Set spending limits (daily, monthly, per-user).
+Attach receipts (image/PDF).
+
+
+Reporting
+Generate per-user reports.
+Export in PDF and Excel formats.
+
+
+Offline and Synchronization
+Store data locally when offline.
+Auto-sync when the internet is restored.
+
+
+Data Backup & Restore
+Manual and automated backups.
+Data restoration functionality.
+
+
+Search & Filtering
+Search by date, category, notes, tags, or party.
+
+
+Accessibility & UI
+Dark mode support.
+WCAG compliance (font resizing, high contrast).
+Minimalistic and intuitive design (quick cash-in/cash-out).
+
+
+
+4. Non-Functional Requirements
+Scalability: Handle up to 10,000 users and 1M transactions initially, but also depends on the server provided/used by the client.
+Security: Encrypt sensitive data (AES-256 for storage, TLS for transmission).
+Compliance: Adhere to financial data handling standards.
+Reliability: 99.5% uptime.
+Usability: Responsive across all screen sizes.
+Maintainability: Modular codebase with API-first architecture.
+
+5. Optional Features (Future Phases)
+Smart reminders for expense logging.
+Cash counter for manual note/coin entry.
+Support for multiple ledgers/books (personal, business, credit/debit).
+Custom dashboards with analytics widgets.
+
+6. External Interface Requirements
+User Interface: Web-based PWA with responsive design and dark mode.
+Hardware Interface: Camera (for receipt capture), storage for offline data.
+Software Interface:
+RESTful APIs (backend).
+Integration with cloud storage/server.
+Authentication via email/SMS gateways.
+
+7. System Models (High-Level)
+Workflow Example (Expense Entry):
+User logs in → enters expense.
+Data saved locally.
+If online → sent to the server immediately.
+If offline → queued and synced later.
+Expense reflected in reports.
+
+8. Constraints
+The project must deliver MVP within 10 days.
+Advanced features (PWA offline sync, receipt uploads, etc) may be delivered in later phases.
+The system must be deployable on cloud VPS or providers such as AWS, DigitalOcean etc..
+
+
+
+
+
+
+9. Technology & Development Requirements
+9.1 Development Technologies To Be Used
+
+The development team will be using the following technologies, stacks or languages in the development process for the application. They are subject to change, depending on the final approved timeline for the project and is not limited to it and can change for a number of reasons.
+Front-End
+HTML, CSS & JS
+Bootstrap 5
+Other JavaScript Libraries
+Back-End
+PHP (Laravel)
+JavaScript
+Restful APIs
+Other libraries and packages
+9.2 Server Requirements
+
+9.2.1 Development Server System Requirement
+
+CPU: 2 vCPUs
+RAM: 4 GB
+Storage: 50 GB SSD
+
+
+9.2.1 Production Server System Requirement
+
+Initially if the business is small-scale, the following is recommended. But client 
+is required to upgrade the server to a more capable one.
+
+CPU: 8 vCPUs
+RAM: 32 GB
+Storage: 200 GB SSD
+
+In case of SMS authentication for users, the client is responsible for providing us with “Bulk SMS” service that contains at least 2000 SMSs and the service must come with APIs.
+
+
+
+10. Phases & Milestones
+
+The project is divided into Phases, which are further divided into milestones, is labeled below. The payment schedule is also listed in the table below.
+
+Phase
+Milestone
+ETA
+
+1
+1.
+Requirement gathering and planning
+1 day
+2.
+Environment and skeleton setup
+3.
+User Authentication
+20% of payment to be completed after completion of milestones 1-3
+4.
+Income and Expense tracking with categorization and tagging 
+6 days
+5.
+Report Generation and PDF and Excel export
+2 day
+6.
+Role based access control
+1 day
+7.
+QA Testing
+
+
+40% of payment to be completed after completion of milestones 4-7
+2
+8.
+Searching and filtering
+1 day
+9.
+Receipt attachment
+10.
+UI/UX testing and Dark Mode implementation
+1 day
+11.
+Multiple ‘books’ or ledgers: separate accounts for personal, business, credit/debit.
+2 days
+12.
+Smart reminders to log expenses regularly
+1 day
+13.
+Data backup and restore
+14.
+QA Testing
+1 day
+3
+15. 
+Conversion to Progressive Web Application (PWA)
+3 days
+40% of payment to be completed after completion of milestones 8 - 15
+16.
+PWA Installation and Testing
+1 day
+
+The project will take multiple weeks instead of just 10 days because it requires the careful development of a multi-layered financial application with both core and advanced features. Unlike a simple website, this system must support secure authentication (with OTP), role-based access control, offline-first PWA functionality, reporting in multiple formats, and cross-device installation. Each of these areas requires dedicated time for design, coding, and testing to ensure the system is stable and secure.
+In particular, implementing offline data storage and background synchronization (via service workers/Workbox) is technically complex and must be tested across multiple operating systems (Windows, MacOS, Linux) and browsers. Features such as receipt uploads, data backup/restore, and encryption also add significant complexity, as they involve working with file systems, large datasets, and compliance with financial data handling standards.
+Furthermore, the client has requested the system to be SaaS-ready and scalable. This requires planning server architecture, optimizing performance for potentially thousands of users and millions of transactions, and setting up secure cloud deployment — all of which cannot be rushed without risking system instability.
+Finally, each milestone includes a QA (Quality Assurance) cycle, where features must be tested thoroughly to prevent data loss, security breaches, or downtime. Skipping or rushing QA would compromise both usability and reliability.
+In short: delivering a prototype in 10 days is possible, but delivering a secure, scalable, offline-capable financial SaaS system requires phased development over multiple weeks. This ensures the client receives a product that is not only functional but also robust, secure, and maintainable for long-term use.
+
+
+11. Technology & Development Requirements
+11.1 Meetings
+Meetings must be scheduled at least 24–72 hours in advance.
+
+
+Both parties must RSVP within 5 hours of receiving the meeting request.
+
+
+Any final changes to the meeting schedule must be communicated no later than 12 hours before the meeting, excluding emergencies.
+
+
+For offline meetings, no Google Meet or equivalent shall be provisioned.
+
+
+
+
+12. Approval & Sign-Off
+Prepared by: [Your Name]
+ Approved by (Client): ___________________
+ Date: ___________________
+
