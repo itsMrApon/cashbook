@@ -23,15 +23,55 @@ def create_app():
     app.secret_key = os.environ.get("SESSION_SECRET")
     app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
     
-    # Database configuration - use SQLite for simplicity
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///cashbook.db"
+    # Database configuration - prefer DATABASE_URL but test connection first
+    database_url = os.environ.get("DATABASE_URL")
+    use_sqlite = False
+    
+    if database_url and 'postgres' in database_url.lower():
+        # Test PostgreSQL connection before committing to it
+        try:
+            import psycopg2
+            from urllib.parse import urlparse
+            
+            # Parse the DATABASE_URL to extract connection parameters
+            parsed = urlparse(database_url)
+            test_conn = psycopg2.connect(
+                host=parsed.hostname,
+                port=parsed.port or 5432,
+                user=parsed.username,
+                password=parsed.password,
+                database=parsed.path[1:] if parsed.path else 'postgres'
+            )
+            test_conn.close()
+            
+            # Connection successful, use PostgreSQL
+            app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+            app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+                "pool_recycle": 300,
+                "pool_pre_ping": True,
+            }
+            logging.info("Using PostgreSQL database")
+        except Exception as e:
+            # PostgreSQL connection failed, fall back to SQLite
+            logging.warning(f"PostgreSQL connection test failed: {str(e)}")
+            logging.info("Falling back to SQLite database")
+            use_sqlite = True
+    else:
+        # No DATABASE_URL or not PostgreSQL
+        use_sqlite = True
+    
+    if use_sqlite:
+        app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///cashbook.db"
+        if not database_url:
+            logging.info("No DATABASE_URL found, using SQLite database")
+    
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     
     # File upload configuration
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
     app.config['UPLOAD_FOLDER'] = 'uploads'
     
-    # Initialize extensions
+    # Initialize extensions (only once)
     db.init_app(app)
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
@@ -44,12 +84,7 @@ def create_app():
     with app.app_context():
         # Import models to ensure they are created
         import models
-        
-        try:
-            db.create_all()
-        except Exception as e:
-            logging.error(f"Error creating database tables: {str(e)}")
-            raise
+        db.create_all()
         
         # Create default admin user if none exists
         from models import User, Role
