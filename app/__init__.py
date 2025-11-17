@@ -52,7 +52,10 @@ def create_app():
     app = Flask(__name__)
     
     # Step 4b: Configure application secret key (for sessions/cookies)
-    app.secret_key = os.environ.get("SESSION_SECRET")
+    # REQUIRED: Set SESSION_SECRET environment variable in Vercel
+    app.secret_key = os.environ.get("SESSION_SECRET") or "dev-secret-key-change-in-production"
+    if not os.environ.get("SESSION_SECRET"):
+        logging.warning("SESSION_SECRET not set! Using default (not secure for production)")
     
     # Step 4c: Configure proxy settings (for production behind reverse proxy)
     app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
@@ -99,7 +102,13 @@ def create_app():
     
     # Step 5f: Configure SQLite as fallback/default database
     if use_sqlite:
-        app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///cashbook.db"
+        # On Vercel, use /tmp directory for SQLite (writable filesystem)
+        # In production, you should use PostgreSQL instead
+        if os.environ.get("VERCEL"):
+            db_path = "/tmp/cashbook.db"
+        else:
+            db_path = "cashbook.db"
+        app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
         if not database_url:
             logging.info("No DATABASE_URL found, using SQLite database")
     
@@ -111,7 +120,12 @@ def create_app():
     # ===========================================
     # Step 6a: File upload configuration
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
-    app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'uploads')
+    # On Vercel, use /tmp directory (writable filesystem)
+    # In production, consider using cloud storage (S3, etc.)
+    if os.environ.get("VERCEL"):
+        app.config['UPLOAD_FOLDER'] = '/tmp/uploads'
+    else:
+        app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'uploads')
     
     # Step 6b: Initialize extensions with app instance
     db.init_app(app)  # Connect database to app
@@ -123,7 +137,10 @@ def create_app():
     login_manager.login_message_category = 'info'
     
     # Step 6d: Create upload directory if it doesn't exist
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    try:
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    except Exception as e:
+        logging.warning(f"Could not create upload directory: {str(e)}")
     
     # ===========================================
     # STEP 7: Database Initialization (Model Layer)
