@@ -23,12 +23,8 @@ def create_app():
     app.secret_key = os.environ.get("SESSION_SECRET")
     app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
     
-    # Database configuration
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///cashbook.db")
-    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-        "pool_recycle": 300,
-        "pool_pre_ping": True,
-    }
+    # Database configuration - use SQLite for simplicity
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///cashbook.db"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     
     # File upload configuration
@@ -48,7 +44,12 @@ def create_app():
     with app.app_context():
         # Import models to ensure they are created
         import models
-        db.create_all()
+        
+        try:
+            db.create_all()
+        except Exception as e:
+            logging.error(f"Error creating database tables: {str(e)}")
+            raise
         
         # Create default admin user if none exists
         from models import User, Role
