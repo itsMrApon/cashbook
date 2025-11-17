@@ -18,7 +18,7 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">
+            <a class="navbar-brand fw-bold" href="{{ url_for('main.index') }}">
                 <i class="fas fa-wallet me-2"></i>CashBook
             </a>
             
@@ -30,33 +30,33 @@
                 {% if current_user.is_authenticated %}
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('dashboard') }}">
+                        <a class="nav-link" href="{{ url_for('main.dashboard') }}">
                             <i class="fas fa-tachometer-alt me-1"></i>Dashboard
                         </a>
                     </li>
                     {% if current_user.has_permission('read') %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('transactions') }}">
+                        <a class="nav-link" href="{{ url_for('main.transactions') }}">
                             <i class="fas fa-exchange-alt me-1"></i>Transactions
                         </a>
                     </li>
                     {% endif %}
                     {% if current_user.has_permission('reports') %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('reports') }}">
+                        <a class="nav-link" href="{{ url_for('main.reports') }}">
                             <i class="fas fa-chart-line me-1"></i>Reports
                         </a>
                     </li>
                     {% endif %}
                     {% if current_user.has_permission('manage_users') %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('users') }}">
+                        <a class="nav-link" href="{{ url_for('main.users') }}">
                             <i class="fas fa-users me-1"></i>Users
                         </a>
                     </li>
                     {% endif %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('settings') }}">
+                        <a class="nav-link" href="{{ url_for('main.settings') }}">
                             <i class="fas fa-cog me-1"></i>Settings
                         </a>
                     </li>
@@ -77,13 +77,13 @@
                         </a>
                         <ul class="dropdown-menu">
                             <li>
-                                <a class="dropdown-item" href="{{ url_for('profile') }}">
+                                <a class="dropdown-item" href="{{ url_for('main.profile') }}">
                                     <i class="fas fa-user me-2"></i>Profile
                                 </a>
                             </li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
-                                <a class="dropdown-item" href="{{ url_for('logout') }}">
+                                <a class="dropdown-item" href="{{ url_for('main.logout') }}">
                                     <i class="fas fa-sign-out-alt me-2"></i>Logout
                                 </a>
                             </li>
@@ -93,7 +93,7 @@
                 {% else %}
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('login') }}">
+                        <a class="nav-link" href="{{ url_for('main.login') }}">
                             <i class="fas fa-sign-in-alt me-1"></i>Login
                         </a>
                     </li>

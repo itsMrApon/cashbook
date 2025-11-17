@@ -212,7 +212,7 @@ def generate_excel_report(transactions, title="Transaction Report"):
 
 def log_audit_action(user_id, action, table_name=None, record_id=None, old_values=None, new_values=None):
     """Log audit action"""
-    from models import AuditLog
+    from app.models import AuditLog
     from app import db
     from flask import request
     
@@ -234,7 +234,7 @@ def log_audit_action(user_id, action, table_name=None, record_id=None, old_value
 
 def get_dashboard_stats(user=None):
     """Get dashboard statistics"""
-    from models import Transaction, User
+    from app.models import Transaction, User
     from sqlalchemy import func
     from datetime import datetime, timedelta
     
@@ -274,7 +274,7 @@ def get_dashboard_stats(user=None):
 def backup_database():
     """Create database backup"""
     # This is a simplified backup - in production, you'd use proper database backup tools
-    from models import User, Transaction, Category, Tag, SpendingLimit
+    from app.models import User, Transaction, Category, Tag, SpendingLimit
     from app import db
     
     backup_data = {
